@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+storage
+*.log
+.env.local
+
+# 本地数据
+dev.db
+dev.db-journal
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev.db-wal
+prisma/dev.db-shm

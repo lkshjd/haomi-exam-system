@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Paper {
+  id              String     @id @default(cuid())
+  site            String
+  externalId      String
+  publishRecordId String     @default("0")
+  title           String
+  courseModule    String?
+  courseName      String?
+  totalScore      Float      @default(0)
+  questionCount   Int        @default(0)
+  sourceStatus    String?
+  sourceUrl       String?
+  importedAt      DateTime   @default(now())
+  questions       Question[]
+  attempts        Attempt[]
+
+  @@unique([site, externalId, publishRecordId])
+}
+
+model Question {
+  id                String   @id @default(cuid())
+  paperId           String
+  paper             Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  externalId        String
+  parentExternalId  String?
+  type              String
+  typeName          String?
+  order             Int      @default(0)
+  stemHtml          String
+  optionsJson       String   @default("[]")
+  structuredJson    String?
+  answerJson        String   @default("[]")
+  answerRaw         String?
+  analysisHtml      String   @default("")
+  maxScore          Float    @default(0)
+  attachmentsJson   String   @default("[]")
+  answerSource      String?
+  missingAnswer     Boolean  @default(false)
+  missingAnalysis   Boolean  @default(false)
+
+  @@unique([paperId, externalId])
+  @@index([paperId, order])
+}
+
+model Attempt {
+  id              String        @id @default(cuid())
+  paperId         String
+  paper           Paper         @relation(fields: [paperId], references: [id])
+  status          String        @default("in_progress")
+  startedAt       DateTime      @default(now())
+  submittedAt     DateTime?
+  totalScore      Float?
+  maxScore        Float         @default(0)
+  snapshotJson    String?
+  gradingVersion  String        @default("v1")
+  answers         Answer[]
+  grades          Grade[]
+  tasks           GradingTask[]
+  events          EventLog[]
+
+  @@index([paperId, startedAt])
+}
+
+model Answer {
+  id                 String   @id @default(cuid())
+  attemptId          String
+  attempt            Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionExternalId String
+  answerJson         String   @default("[]")
+  updatedAt          DateTime @updatedAt
+
+  @@unique([attemptId, questionExternalId])
+}
+
+model Grade {
+  id                 String   @id @default(cuid())
+  attemptId          String
+  attempt            Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionExternalId String
+  score              Float    @default(0)
+  maxScore           Float    @default(0)
+  isCorrect          Boolean?
+  method             String   @default("rule")
+  detailJson         String?
+  needsReview        Boolean  @default(false)
+  gradingVersion     String   @default("v1")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([attemptId, questionExternalId, gradingVersion])
+}
+
+model GradingTask {
+  id                 String   @id @default(cuid())
+  attemptId          String
+  attempt            Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionExternalId String
+  status             String   @default("pending")
+  tries              Int      @default(0)
+  lastError          String?
+  leaseUntil         DateTime?
+  workerId           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([attemptId, questionExternalId])
+}
+
+model EventLog {
+  id          String   @id @default(cuid())
+  attemptId   String
+  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  type        String
+  payloadJson String   @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([attemptId, createdAt])
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
