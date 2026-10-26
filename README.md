@@ -60,7 +60,7 @@
 ### 库里当前数据
 
 - 7 套试卷、256 道题
-- 5 次作答记录、0 条待批任务
+- 作答记录随实际使用增长；当前没有待批任务
 - AI 配置默认为空；未配置时主观题走模拟评分
 
 ---
@@ -75,13 +75,16 @@ npm install
 npx prisma db push
 ```
 
-启动（会同时拉起 Next.js 和批改 worker）：
+启动方式（两种等价，都会同时拉起 Next.js 和批改 worker）：
 
-```powershell
-.\start.ps1
-```
+- **CMD 一键启动**：双击 `exam-app\start.bat`
+- PowerShell：`cd exam-app; .\start.ps1`
 
-打开 http://127.0.0.1:3000 。
+打开 http://127.0.0.1:3000 ，按 `Ctrl+C` 会同时停止网页服务和 worker。
+
+不想自动打开浏览器时用 `start.bat -NoBrowser`。
+
+> 编码说明：`start.bat` 只包含 ASCII 字符并执行 `chcp 65001`，`start.ps1` 以 UTF-8 BOM 保存，PowerShell 5.1 和 7 都能正确显示中文；worker 日志写到 `storage\worker.log`。
 
 ### 第一次使用
 
